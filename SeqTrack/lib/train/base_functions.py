@@ -78,8 +78,8 @@ def names2datasets(name_list: list, settings, image_loader):
 
 
 def build_dataloaders(cfg, settings):
-    settings.num_template = getattr(cfg.DATA.TEMPLATE, "NUMBER", 1)
-    settings.num_search = getattr(cfg.DATA.SEARCH, "NUMBER", 1)
+    settings.num_template = getattr(cfg.DATA.TEMPLATE, "NUMBER", 1)#2
+    settings.num_search = getattr(cfg.DATA.SEARCH, "NUMBER", 1)#1
     # Data transform
     transform_joint = tfm.Transform(tfm.ToGrayscale(probability=0.05),
                                     tfm.RandomHorizontalFlip(probability=0.5))

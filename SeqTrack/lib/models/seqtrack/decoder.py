@@ -94,26 +94,26 @@ class SeqTrackDecoder(nn.Module):
             center_pos = [2, 3]
 
         for i in range(self.num_coordinates): # only cycle 4 times, because we do not need to predict the end token during inference
-            tgt = self.embedding(seq).permute(1, 0, 2)
-            query_embed = self.embedding.position_embeddings.weight.unsqueeze(1)
-            query_embed = query_embed.repeat(1, bs, 1)
-            tgt_mask = generate_square_subsequent_mask(len(tgt)).to(tgt.device)
+            tgt = self.embedding(seq).permute(1, 0, 2)#[1,1,256]
+            query_embed = self.embedding.position_embeddings.weight.unsqueeze(1)#[5,1,256]
+            query_embed = query_embed.repeat(1, bs, 1)#[5,1,256]
+            tgt_mask = generate_square_subsequent_mask(len(tgt)).to(tgt.device)#[1,1]
 
             hs = self.body(tgt, memory, pos=pos_embed[:len(memory)], query_pos=query_embed[:len(tgt)],
-                              tgt_mask=tgt_mask, memory_mask=None)
+                              tgt_mask=tgt_mask, memory_mask=None)#[1,1,1,256]
 
             # embedding --> likelihood
-            out = vocab_embed(hs.transpose(1, 2)[-1, :, -1, :])
-            out = out.softmax(-1)
+            out = vocab_embed(hs.transpose(1, 2)[-1, :, -1, :])#[1,4002]
+            out = out.softmax(-1)#[1,4002]
 
-            if i in box_pos:
-                out = out[:, :self.bins] # only include the coordinate values' confidence
+            if i in box_pos:#[0,1,2,3]
+                out = out[:, :self.bins] # only include the coordinate values' confidence; self.bins:4000;[1,4000]
 
             if ((i in center_pos) and (window!=None)):
                 out = out * window # window penalty
 
-            confidence, token_generated = out.topk(dim=-1, k=1)
-            seq = torch.cat([seq, token_generated], dim=-1)
+            confidence, token_generated = out.topk(dim=-1, k=1)#[1,1];[1,1]
+            seq = torch.cat([seq, token_generated], dim=-1)#[1,2]
             confidence_list.append(confidence)
 
         out_dict = {}

@@ -287,11 +287,11 @@ class VisionTransformer(nn.Module):
 
         z_list = []
         for i in range(num_template):
-            z = template_list[i]
-            z = self.patch_embed(z)
+            z = template_list[i]#b*[3,256,256]
+            z = self.patch_embed(z)#*[b,256,768]
             z = z + self.pos_embed[:, self.num_patches_search:, :]
-            z_list.append(z)
-        z_feat = torch.cat(z_list, dim=1)
+            z_list.append(z)#[16,256,768]
+        z_feat = torch.cat(z_list, dim=1)#[b,512,768]
 
         x_list = []
         for i in range(num_search):
@@ -300,7 +300,7 @@ class VisionTransformer(nn.Module):
             x = x + self.pos_embed[:, :self.num_patches_search, :]
             x_list.append(x)
         x_feat = torch.cat(x_list, dim=1)
-        xz_feat = torch.cat([x_feat, z_feat], dim=1)
+        xz_feat = torch.cat([x_feat, z_feat], dim=1)#[b,768,768]
 
         xz = self.pos_drop(xz_feat)
 
