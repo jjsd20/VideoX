@@ -37,7 +37,7 @@ class SeqTrackActor(BaseActor):
         search_list = search_img.split(b,dim=0)
         template_img = data['template_images'].view(-1, *data['template_images'].shape[2:])
         template_list = template_img.split(b,dim=0)
-        feature_xz = self.net(images_list=template_list+search_list, mode='encoder') # forward the encoder
+        feature_xz = self.net(images_list=template_list+search_list, mode='encoder') # forward the encoder[16,768,768]
 
         bins = self.BINS # coorinate token
         start = bins + 1 # START token
@@ -85,11 +85,11 @@ class SeqTrackActor(BaseActor):
         # weighted sum
         loss = self.loss_weight['ce'] * ce_loss
 
-        outputs = outputs.softmax(-1)
-        outputs = outputs[:, :self.BINS]
-        value, extra_seq = outputs.topk(dim=-1, k=1)
-        boxes_pred = extra_seq.squeeze(-1).reshape(-1,5)[:, 0:-1]
-        boxes_target = targets_seq.reshape(-1,5)[:,0:-1]
+        outputs = outputs.softmax(-1)#[80,4002]
+        outputs = outputs[:, :self.BINS]#[80,4000]
+        value, extra_seq = outputs.topk(dim=-1, k=1)#[80,1], [80,1]
+        boxes_pred = extra_seq.squeeze(-1).reshape(-1,5)[:, 0:-1]#16*4
+        boxes_target = targets_seq.reshape(-1,5)[:,0:-1]#16*4
         boxes_pred = box_cxcywh_to_xyxy(boxes_pred)
         boxes_target = box_cxcywh_to_xyxy(boxes_target)
         iou = box_iou(boxes_pred, boxes_target)[0].mean()
